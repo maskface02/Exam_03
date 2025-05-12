@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-//#define BUFFER_SIZE 100
+#define BUFFER_SIZE 100
 
 char	*get_next_line(int fd)
 {
@@ -28,9 +28,8 @@ char	*get_next_line(int fd)
 			break ;
 	}
 	res[i] = '\0';
-  if (!i)
+	if (!i)
 		return (free(res), NULL);
-
 	return (res);
 }
 
