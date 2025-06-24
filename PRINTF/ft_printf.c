@@ -1,4 +1,5 @@
 
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -46,8 +47,8 @@ int	print_num(int n)
 	long	nb;
 	int		degit;
 
-	degit = degit_count(n);
 	nb = n;
+	degit = degit_count(nb);
 	if (nb < 0)
 	{
 		nb *= -1;
@@ -76,11 +77,11 @@ int	count_hex(size_t n)
 	}
 	return (count);
 }
-int	print_hexa(size_t n)
+int	print_hexa(unsigned int  n)
 {
 	if (!n)
 		return (print_num(0));
-	if (n <= 16)
+	if (n < 16)
 	{
 		if (n < 10)
 			print_char(n + 48);
@@ -113,13 +114,14 @@ int	ft_printf(const char *f, ...)
 			if (*(f + 1) == 'd')
 				size += print_num(va_arg(ap, int));
 			if (*(f + 1) == 'x')
-				size += print_hexa(va_arg(ap, size_t));
+				size += print_hexa(va_arg(ap, unsigned int));
 			f++;
 		}
 		else
 			size += print_char(*f);
 		f++;
 	}
+  va_end(ap);
 	return (size);
 }
 
@@ -127,8 +129,8 @@ int	main(void)
 {
 	int	size;
 
-	size = ft_printf("%s\n", NULL);
+	size = ft_printf("%x\n", NULL);
 	ft_printf("%d\n", size);
-	size = printf("%s\n", NULL);
+	size = printf("%x\n", NULL);
 	printf("%d", size);
 }

@@ -1,55 +1,103 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+# ifndef BUFFER_SIZE
 
-#define BUFFER_SIZE 100
+#  define BUFFER_SIZE 4096
+# endif
+
+# define BLOCK_SIZE 4096
+# define READ_ERROR -99
+
+# include <stddef.h>
+# include <unistd.h>
+
+typedef struct s_buffer
+{
+	ssize_t	n;
+	char	*bufp;
+	char	buf[BUFFER_SIZE];
+}			t_buffer;
+
+typedef struct s_string
+{
+	char	*str;
+	size_t	len;
+	size_t	capa;
+}			t_string;
+
+static int	ft_getc(int fd)
+{
+	static t_buffer	buf;
+
+	if (buf.n == 0)
+	{
+		buf.n = read(fd, buf.buf, BUFFER_SIZE);
+		if (buf.n < 0)
+		{
+			buf.n = 0;
+			return (READ_ERROR);
+		}
+		buf.bufp = buf.buf;
+	}
+	if (--buf.n >= 0)
+	{
+		return ((unsigned char)*buf.bufp++);
+	}
+	buf.n = 0;
+	return (EOF);
+}
+
+static int	ft_putc(t_string *str, char c)
+{
+	size_t	i;
+	char	*tmp;
+
+	if (str->len + 1 > str->capa)
+	{
+		tmp = str->str;
+		str->str = (char *)malloc((str->capa + BLOCK_SIZE) * sizeof(char));
+		if (!str->str)
+		{
+			free(tmp);
+			return (1);
+		}
+		i = 0;
+		while (i < str->len)
+		{
+			str->str[i] = tmp[i];
+			i++;
+		}
+		free(tmp);
+		str->capa += BLOCK_SIZE;
+	}
+	str->str[str->len] = c;
+	str->len++;
+	return (0);
+}
 
 char	*get_next_line(int fd)
 {
-	char	*res;
-	char	readed;
-	int		readed_bytes;
-	int		i;
+	t_string	str;
+	char		c;
 
-	i = 0;
-	res = malloc(BUFFER_SIZE + 1);
-	if (!res)
-		return (NULL);
+	str.str = NULL;
+	str.len = 0;
+	str.capa = 0;
 	while (1)
 	{
-		readed_bytes = read(fd, &readed, 1);
-		if (readed_bytes == -1)
-			return (free(res), NULL);
-		if (!readed_bytes)
+		c = ft_getc(fd);
+		if (c == READ_ERROR)
+		{
+			free(str.str);
+			return (NULL);
+		}
+		if (c == EOF)
 			break ;
-		res[i++] = readed;
-		if (readed == '\n')
+		if (ft_putc(&str, c))
+			return (NULL);
+		if (c == '\n')
 			break ;
 	}
-	res[i] = '\0';
-	if (!i)
-		return (free(res), NULL);
-	return (res);
-}
-
-int	main(int ac, char **av)
-{
-	int		fd;
-	int		i;
-	char	*line;
-
-	if (ac > 2 || ac < 2)
-		return (0);
-	fd = open(av[1], O_RDONLY);
-	if (fd == -1)
-		return (0);
-	i = 0;
-	line = get_next_line(fd);
-	while (line)
-	{
-		printf("%s", line);
-		free(line);
-		line = get_next_line(fd);
-	}
+	if (str.len > 0)
+		if (ft_putc(&str, '\0'))
+			return (NULL);
+	return (str.str);
 }
